@@ -1,6 +1,6 @@
-# 📦 Streamlit App Starter Kit 
+# 💉 AI Health Monitor System
 ```
-⬆️ (Replace above with your app's name)
+This is the ai health monitor system app thats detect the heart rate , blood oxygen and return the status.
 ```
 
 Description of the app ...
