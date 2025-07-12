@@ -1,5 +1,5 @@
 import streamlit as st
 
-st.title('🎈 App Name')
+st.title('💉 AI Health Monitor System')
 
-st.write('Hello world!')
+st.write('This health monitor app with detect if you have the normal blood oxygen and heart rate')
