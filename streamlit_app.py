@@ -1,65 +1,78 @@
+# Smart Home Affairs Assistant using Streamlit
+
 import streamlit as st
 import pandas as pd
-from sklearn.ensemble import IsolationForest
-import joblib
+from datetime import datetime
 import os
 
-st.title('💉 AI Health Monitor System')
-st.write('This health monitor app will detect if you have normal blood oxygen or heart rate')
+st.set_page_config(page_title="Home Affairs AI Assistant", layout="wide")
 
-# Load the pre-trained model
-model = joblib.load('/workspaces/Week8-AI-Engineer/models/anomaly_model.pkl')
+# --- App Title ---
+st.title("🇿🇦 Smart Home Affairs AI Assistant")
+st.markdown("""
+This app helps South African citizens:
+- Upload and store digital IDs
+- Book appointments
+- Interact with an AI assistant for FAQs
+""")
 
-# Anomaly detection function
-def detect_anomalies(new_data):
-    prediction = model.predict([new_data])  # returns 1 (normal), -1 (anomaly)
-    return 'Anomaly' if prediction[0] == -1 else 'Normal'
+# --- Tabs ---
+tabs = st.tabs(["📄 Digital ID Upload", "📅 Book Appointment", "🤖 Chatbot (Mock)", "📊 Admin Dashboard"])
 
-# Recommendation engine
-def get_recommendation(status, heart_rate, oxygen):
-    if status == 'Anomaly':
-        if heart_rate > 100:
-            return "⚠️ High heart rate detected. Please rest or consult a doctor."
-        elif oxygen < 92:
-            return "⚠️ Low blood oxygen. Consider breathing exercises or medical help."
+# --- Tab 1: Digital ID Upload ---
+with tabs[0]:
+    st.header("📄 Upload Your Digital ID")
+    name = st.text_input("Full Name")
+    id_number = st.text_input("ID Number")
+    uploaded_file = st.file_uploader("Upload your ID or Passport (PDF or Image)", type=["pdf", "png", "jpg", "jpeg"])
+
+    if st.button("Save Document"):
+        if name and id_number and uploaded_file:
+            upload_dir = "uploaded_ids"
+            os.makedirs(upload_dir, exist_ok=True)
+            file_path = os.path.join(upload_dir, uploaded_file.name)
+            with open(file_path, "wb") as f:
+                f.write(uploaded_file.getbuffer())
+            st.success(f"ID for {name} uploaded successfully!")
         else:
-            return "⚠️ Irregular pattern detected. Monitor your health."
-    return "✅ All metrics are within a healthy range. Keep it up!"
+            st.warning("Please fill all fields and upload a file.")
 
-# Upload CSV
-uploaded_file = st.file_uploader("📤 Upload your wearable data (CSV)", type="csv")
+# --- Tab 2: Appointment Booking ---
+with tabs[1]:
+    st.header("📅 Book an Appointment")
+    service = st.selectbox("Select a service", ["New ID", "Passport Renewal", "Birth Certificate", "Marriage Certificate"])
+    province = st.selectbox("Select Province", ["Gauteng", "KZN", "Western Cape", "Eastern Cape"])
+    branch = st.selectbox("Select Branch", ["Johannesburg Central", "Durban Office", "Cape Town Civic", "Port Elizabeth"])
+    date = st.date_input("Select Appointment Date")
+    time = st.time_input("Select Appointment Time")
 
-if uploaded_file:
-    df = pd.read_csv(uploaded_file)
-    st.subheader("📊 Uploaded Data")
-    st.dataframe(df)
+    if st.button("Confirm Booking"):
+        booking = {
+            "Service": service,
+            "Province": province,
+            "Branch": branch,
+            "Date": date.strftime("%Y-%m-%d"),
+            "Time": time.strftime("%H:%M")
+        }
+        st.success(f"Appointment confirmed for {booking['Service']} on {booking['Date']} at {booking['Time']} in {booking['Branch']}, {booking['Province']}")
 
-    results = []
-    for _, row in df.iterrows():
-        status = detect_anomalies([row['heart_rate'], row['blood_oxygen']])
-        recommendation = get_recommendation(status, row['heart_rate'], row['blood_oxygen'])
-        
-        # Append results for saving later
-        results.append({
-            'timestamp': row['timestamp'],
-            'heart_rate': row['heart_rate'],
-            'blood_oxygen': row['blood_oxygen'],
-            'activity_level': row.get('activity_level', 'N/A'),
-            'status': status,
-            'recommendation': recommendation
-        })
+# --- Tab 3: Chatbot Placeholder ---
+with tabs[2]:
+    st.header("🤖 AI Chatbot Assistant")
+    st.markdown("_Note: This is a placeholder. Integrate OpenAI or Dialogflow for full functionality._")
+    user_input = st.text_input("Ask me anything about Home Affairs services")
+    if user_input:
+        st.info(f"You asked: {user_input}")
+        st.success("This is a mock response. You can connect this to a real AI model.")
 
-        # Display 
-        st.markdown(f"**Time:** {row['timestamp']} — Status: `{status}`")
-        st.markdown(f"*{recommendation}*")
+# --- Tab 4: Admin Dashboard ---
+with tabs[3]:
+    st.header("📊 Admin Dashboard")
+    st.markdown("_Simulated statistics for demo purposes_")
+    stats = pd.DataFrame({
+        "Service": ["New ID", "Passport Renewal", "Birth Certificate"],
+        "Bookings": [120, 85, 45]
+    })
+    st.bar_chart(stats.set_index("Service"))
 
-    # Convert results to DataFrame
-    results_df = pd.DataFrame(results)
-
-    # Button to save results
-    if st.button("💾 Save Results to CSV"):
-        output_path = '/workspaces/Week8-AI-Engineer/models/result.csv'
-        os.makedirs(os.path.dirname(output_path), exist_ok=True)
-        results_df.to_csv(output_path, index=False)
-        st.success(f"✅ Results saved to {output_path}")
 
